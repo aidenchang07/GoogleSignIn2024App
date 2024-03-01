@@ -19,6 +19,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.adncoding.googlesignin2024app.presentation.profile.ProfileScreen
 import com.adncoding.googlesignin2024app.presentation.sign_in.SignInScreen
 import com.adncoding.googlesignin2024app.presentation.sign_in.SignInViewModel
 import com.adncoding.googlesignin2024app.presentation.sign_in.GoogleAuthUiClient
@@ -52,6 +53,12 @@ class MainActivity : ComponentActivity() {
                             val viewModel = viewModel<SignInViewModel>()
                             val state by viewModel.state.collectAsStateWithLifecycle()
 
+                            LaunchedEffect(key1 = Unit) {
+                                if (googleAuthUiClient.getSignedInUser() != null) {
+                                    navController.navigate("profile")
+                                }
+                            }
+
                             val launcher = rememberLauncherForActivityResult(
                                 contract = ActivityResultContracts.StartIntentSenderForResult(),
                                 onResult = { result ->
@@ -71,6 +78,8 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 if (state.isSignInSuccessful) {
                                     Toast.makeText(applicationContext, "Sign in successful", Toast.LENGTH_LONG).show()
+                                    navController.navigate("profile")
+                                    viewModel.resetState()
                                 }
                             }
 
@@ -84,6 +93,18 @@ class MainActivity : ComponentActivity() {
                                                 signInIntentSender ?: return@launch
                                             ).build()
                                         )
+                                    }
+                                }
+                            )
+                        }
+                        composable("profile") {
+                            ProfileScreen(
+                                userData = googleAuthUiClient.getSignedInUser(),
+                                onSignOut = {
+                                    lifecycleScope.launch {
+                                        googleAuthUiClient.signOut()
+                                        Toast.makeText(applicationContext, "Signed out", Toast.LENGTH_LONG).show()
+                                        navController.popBackStack()
                                     }
                                 }
                             )
